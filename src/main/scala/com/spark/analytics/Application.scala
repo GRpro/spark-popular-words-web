@@ -1,4 +1,4 @@
-package com.examples
+package com.spark.analytics
 
 import org.apache.spark.ml.feature.{RegexTokenizer, StopWordsRemover}
 import org.apache.spark.sql.SparkSession
@@ -18,8 +18,7 @@ object Application {
   val flattenWords = udf { (words: Seq[String]) => words}
 
   def main(args: Array[String]): Unit = {
-
-    val inputFilePath = "input.txt"
+    val inputFilePath = "input/input.txt"
     val destPath = "output"
     val n = 10
 

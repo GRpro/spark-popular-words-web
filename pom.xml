@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>spark-scala-maven-project</groupId>
     <artifactId>spark-scala-maven-project</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1-SNAPSHOT</version>
     <name>${project.artifactId}</name>
     <description>This is a boilerplate maven project to start using Spark in Scala</description>
     <inceptionYear>2010</inceptionYear>
@@ -15,6 +15,7 @@
         <scala.tools.version>2.10</scala.tools.version>
         <!-- Put the Scala version of the cluster -->
         <scala.version>2.11.1</scala.version>
+        <spark.version>2.1.1</spark.version>
     </properties>
 
     <!-- repository to add org.apache.spark -->
@@ -70,6 +71,11 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>2.4.1</version>
                 <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.spark.analytics.Application</mainClass>
+                        </manifest>
+                    </archive>
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
@@ -84,11 +90,53 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.21.0</version>
+                <configuration>
+                    <dockerHost>https://localhost:2376</dockerHost>
+                    <images>
+                        <image>
+                            <name>${artifactId}</name>
+
+                            <build>
+                                <from>java:8</from>
+                                <maintainer>grigoriyroghkov@gmail.com</maintainer>
+                            </build>
+                        </image>
+                    </images>
+                </configuration>
+
+                <!-- Connect start/stop to pre- and
+                     post-integration-test phase, respectively if you want to start
+                     your docker containers during integration tests -->
+                <executions>
+                    <execution>
+                        <id>start</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <!-- "build" should be used to create the images with the
+                                 artifact -->
+                            <goal>build</goal>
+                            <goal>start</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>stop</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
-        <!-- Scala and Spark dependencies -->
+        <!-- Scala -->
         <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
@@ -98,19 +146,19 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.11</artifactId>
-            <version>2.1.1</version>
+            <version>${spark.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql_2.11 -->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.11</artifactId>
-            <version>2.1.1</version>
+            <version>${spark.version}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-mllib_2.11 -->
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.11</artifactId>
-            <version>2.1.1</version>
+            <version>${spark.version}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.jsoup/jsoup -->

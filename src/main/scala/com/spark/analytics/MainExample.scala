@@ -1,4 +1,4 @@
-package com.examples
+package com.spark.analytics
 
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
