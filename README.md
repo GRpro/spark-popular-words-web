@@ -1,7 +1,7 @@
-Spark Web page analyzer [![Build Status](https://travis-ci.org/GRpro/spark-popular-words-web.svg?branch=master)]
+Spark Web page analyzer ![Build Status](https://travis-ci.org/GRpro/spark-popular-words-web.svg?branch=master)
 -----------------------------
 
-This is a Spark job which receives a bunch of URIs of web pages and calculates top 10 popular words on these pages.
+This is a Spark job which receives a bunch of URIs of web pages and calculates top 10 the most popular words on these pages.
 
 *Java 1.8*, *Docker*, *Maven* have to be installed on your machine.
 The project has been developed and tested on MacOS Sierra 10.12.5.
@@ -20,9 +20,9 @@ In order to compile application and create docker image locally execute:
 
 `mvn clean install -Pdocker`
 
-See `docker images` output to find new image
+See `docker images` output to find newly created image
 
-Use `run.sh` to run it.
+Use `./run.sh` to run it.
 
 
 
