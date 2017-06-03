@@ -1,34 +1,38 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>spark-scala-maven-project</groupId>
-    <artifactId>spark-scala-maven-project</artifactId>
+
+    <groupId>com.spark.analytics</groupId>
+    <artifactId>spark-popular-words-web</artifactId>
     <version>0.1-SNAPSHOT</version>
+
     <name>${project.artifactId}</name>
-    <description>This is a boilerplate maven project to start using Spark in Scala</description>
-    <inceptionYear>2010</inceptionYear>
+    <description>
+        This is a Spark job which receives a bunch of URIs and calculates top N popular words on these pages
+    </description>
 
     <properties>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <encoding>UTF-8</encoding>
-        <scala.tools.version>2.10</scala.tools.version>
+        <scala.tools.version>2.11.7</scala.tools.version>
         <!-- Put the Scala version of the cluster -->
-        <scala.version>2.11.1</scala.version>
+        <scala.version>2.11.7</scala.version>
         <spark.version>2.1.1</spark.version>
     </properties>
 
     <!-- repository to add org.apache.spark -->
-    <repositories>
-        <repository>
-            <id>cloudera-repo-releases</id>
-            <url>https://repository.cloudera.com/artifactory/repo/</url>
-        </repository>
-    </repositories>
+    <!--<repositories>-->
+    <!--<repository>-->
+    <!--<id>cloudera-repo-releases</id>-->
+    <!--<url>https://repository.cloudera.com/artifactory/repo/</url>-->
+    <!--</repository>-->
+    <!--</repositories>-->
 
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
         <testSourceDirectory>src/test/scala</testSourceDirectory>
+
         <plugins>
             <plugin>
                 <!-- see http://davidb.github.com/scala-maven-plugin -->
@@ -50,20 +54,34 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- disable surefire -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.13</version>
+                <version>2.7</version>
                 <configuration>
-                    <useFile>false</useFile>
-                    <disableXmlReport>true</disableXmlReport>
-                    <!-- If you have classpath issue like NoDefClassError,... -->
-                    <!-- useManifestOnlyJar>false</useManifestOnlyJar -->
-                    <includes>
-                        <include>**/*Test.*</include>
-                        <include>**/*Suite.*</include>
-                    </includes>
+                    <skipTests>true</skipTests>
                 </configuration>
+            </plugin>
+            <!-- enable scalatest -->
+            <plugin>
+                <groupId>org.scalatest</groupId>
+                <artifactId>scalatest-maven-plugin</artifactId>
+                <version>1.0</version>
+                <configuration>
+                    <reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
+                    <junitxml>.</junitxml>
+                    <filereports>WDF TestSuite.txt</filereports>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>test</id>
+                        <goals>
+                            <goal>test</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- "package" command plugin -->
@@ -73,7 +91,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.spark.analytics.Application</mainClass>
+                            <mainClass>com.spark.analytics.LocalRunner</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -96,14 +114,35 @@
                 <artifactId>docker-maven-plugin</artifactId>
                 <version>0.21.0</version>
                 <configuration>
-                    <dockerHost>https://localhost:2376</dockerHost>
                     <images>
                         <image>
                             <name>${artifactId}</name>
 
                             <build>
+                                <!--<dockerFileDir>${basedir}</dockerFileDir>-->
                                 <from>java:8</from>
                                 <maintainer>grigoriyroghkov@gmail.com</maintainer>
+
+                                <assembly>
+                                    <mode>dir</mode>
+                                    <inline>
+                                        <files>
+                                            <file>
+                                                <source>
+                                                    ${project.build.directory}/${artifactId}-${project.version}-jar-with-dependencies.jar
+                                                </source>
+                                                <outputDirectory>./
+                                                </outputDirectory> <!-- create /maven/application.jar -->
+                                                <destName>application.jar</destName>
+                                            </file>
+                                        </files>
+                                    </inline>
+                                </assembly>
+
+                                <entryPoint>
+                                    <shell>java -Xms512m -Xmx1024m -jar /maven/application.jar $INPUT_URI $OUTPUT_URI
+                                    </shell>
+                                </entryPoint>
                             </build>
                         </image>
                     </images>
@@ -114,23 +153,31 @@
                      your docker containers during integration tests -->
                 <executions>
                     <execution>
-                        <id>start</id>
-                        <phase>pre-integration-test</phase>
+                        <id>docker-build</id>
                         <goals>
-                            <!-- "build" should be used to create the images with the
-                                 artifact -->
                             <goal>build</goal>
-                            <goal>start</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>stop</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>stop</goal>
                         </goals>
                     </execution>
                 </executions>
+                <!--<executions>-->
+                <!--<execution>-->
+                <!--<id>start</id>-->
+                <!--<phase>pre-integration-test</phase>-->
+                <!--<goals>-->
+                <!--&lt;!&ndash; "build" should be used to create the images with the-->
+                <!--artifact &ndash;&gt;-->
+                <!--<goal>build</goal>-->
+                <!--<goal>start</goal>-->
+                <!--</goals>-->
+                <!--</execution>-->
+                <!--<execution>-->
+                <!--<id>stop</id>-->
+                <!--<phase>post-integration-test</phase>-->
+                <!--<goals>-->
+                <!--<goal>stop</goal>-->
+                <!--</goals>-->
+                <!--</execution>-->
+                <!--</executions>-->
             </plugin>
         </plugins>
     </build>
@@ -142,6 +189,7 @@
             <artifactId>scala-library</artifactId>
             <version>${scala.version}</version>
         </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-core_2.11 -->
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -168,6 +216,13 @@
             <version>1.10.2</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.scalatest/scalatest_2.11 -->
+        <dependency>
+            <groupId>org.scalatest</groupId>
+            <artifactId>scalatest_2.11</artifactId>
+            <version>3.0.3</version>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 </project>

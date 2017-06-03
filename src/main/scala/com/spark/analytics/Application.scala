@@ -1,37 +1,19 @@
 package com.spark.analytics
 
 import org.apache.spark.ml.feature.{RegexTokenizer, StopWordsRemover}
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.functions._
 import org.jsoup.Jsoup
 
-object Application {
-
-  def createSparkSession(): SparkSession = {
-    SparkSession.builder()
-      .master("local[*]")
-      .appName("Spark web scrapper")
-      .getOrCreate
-  }
-
-  val extractText = udf { (uri: String) => Jsoup.connect(uri).get().text() }
-  val flattenWords = udf { (words: Seq[String]) => words}
-
-  def main(args: Array[String]): Unit = {
-    val inputFilePath = "input/input.txt"
-    val destPath = "output"
-    val n = 10
+import scala.util.Try
 
 
+class Application(source: => DataFrame,
+                  sink: DataFrame => Unit,
+                  val topN: Int) {
 
-
-    lazy val sparkSession: SparkSession = createSparkSession()
-    import sparkSession.implicits._
-
-    val uris = sparkSession.sparkContext.textFile(inputFilePath)
-      .toDF("uri")
-
-    val text = uris.withColumn("text", extractText(col("uri")))
+  def run(implicit sparkSession: SparkSession): Unit = {
+    val text = source
 
     /*
     [^\\w]+ - one or more non-alphanumeric-character
@@ -48,16 +30,38 @@ object Application {
       .setInputCol("words")
       .setOutputCol("filtered_words")
 
-    val tokenized = regexTokenizer.transform(text).select(col("uri"), col("words"))
-    val cleaned = remover.transform(tokenized).select(col("uri"), col("filtered_words"))
-
+    val tokenized = regexTokenizer.transform(text).select(col("words"))
+    val cleaned = remover.transform(tokenized).select(col("filtered_words"))
     val counts = cleaned.select("filtered_words").withColumn("words", explode(col("filtered_words")))
+    val result = counts.groupBy("words").count().orderBy(desc("count")).limit(topN)
 
-    counts.show()
-
-    val result = counts.groupBy("words").count().orderBy(desc("count"))
-    result.collect().foreach(println(_))
-
-    result.write.format("com.databricks.spark.csv").option("header","true").save(destPath)
+    sink(result)
   }
+}
+
+object Application {
+
+  def webSource(inputUri: String)(implicit sparkSession: SparkSession) = {
+
+    import sparkSession.implicits._
+
+    // bad uris will be filtered
+    val extractText = udf { (uri: String) => Try(Jsoup.connect(uri).get().text()).getOrElse(null) }
+
+    val text = sparkSession.sparkContext.textFile(inputUri)
+      .toDF("uri")
+      .withColumn("text", extractText(col("uri")))
+      .filter($"text".isNotNull)
+    text
+  }
+
+  def fileSink(outputUri: String)(result: DataFrame)(implicit sparkSession: SparkSession) = {
+    result.write
+      .format("com.databricks.spark.csv")
+      .option("header", "true")
+      .save(outputUri)
+  }
+
+  def apply(inputUri: String, outputUri: String, topN: Int)(implicit sparkSession: SparkSession): Application =
+    new Application(webSource(inputUri), fileSink(outputUri), topN)
 }

@@ -1,4 +1,5 @@
-
+data/output
+spark-warehouse
 target/
 target/*
 *.iml

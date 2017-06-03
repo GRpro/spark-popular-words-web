@@ -1,0 +1,3 @@
+https://mvnrepository.com/artifact/org.apache.spark/spark-sql_2.11/2.1.1
+https://en.wikipedia.org/wiki/Meaning_of_life
+https://en.wikipedia.org/wiki/Wisdom
