@@ -32,10 +32,9 @@
                         <configuration>
                             <images>
                                 <image>
-                                    <name>${artifactId}</name>
+                                    <name>grpro/${artifactId}</name>
 
                                     <build>
-                                        <!--<dockerFileDir>${basedir}</dockerFileDir>-->
                                         <from>java:8</from>
                                         <maintainer>grigoriyroghkov@gmail.com</maintainer>
 
@@ -63,10 +62,6 @@
                                 </image>
                             </images>
                         </configuration>
-
-                        <!-- Connect start/stop to pre- and
-                             post-integration-test phase, respectively if you want to start
-                             your docker containers during integration tests -->
                         <executions>
                             <execution>
                                 <id>docker-build</id>
@@ -75,25 +70,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                        <!--<executions>-->
-                        <!--<execution>-->
-                        <!--<id>start</id>-->
-                        <!--<phase>pre-integration-test</phase>-->
-                        <!--<goals>-->
-                        <!--&lt;!&ndash; "build" should be used to create the images with the-->
-                        <!--artifact &ndash;&gt;-->
-                        <!--<goal>build</goal>-->
-                        <!--<goal>start</goal>-->
-                        <!--</goals>-->
-                        <!--</execution>-->
-                        <!--<execution>-->
-                        <!--<id>stop</id>-->
-                        <!--<phase>post-integration-test</phase>-->
-                        <!--<goals>-->
-                        <!--<goal>stop</goal>-->
-                        <!--</goals>-->
-                        <!--</execution>-->
-                        <!--</executions>-->
                     </plugin>
                 </plugins>
             </build>

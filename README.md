@@ -1,19 +1,30 @@
-### Instructions:
+Spark Web page analyzer [![Build Status](https://travis-ci.org/GRpro/spark-popular-words-web.svg?branch=master)]
+-----------------------------
 
-[Follow this article to find more detailed instructions.](https://nosqlnocry.wordpress.com/2015/02/27/how-to-build-a-spark-fat-jar-in-scala-and-submit-a-job/)
+This is a Spark job which receives a bunch of URIs of web pages and calculates top 10 popular words on these pages.
 
-Modify the class "MainExample.scala" writing your Spark code, then compile the project with the command:
+*Java 1.8*, *Docker*, *Maven* have to be installed on your machine.
+The project has been developed and tested on MacOS Sierra 10.12.5.
 
-```mvn clean package```
+### Run
 
-Inside the ```/target``` folder you will find the result fat jar called ```spark-scala-maven-project-0.0.1-SNAPSHOT-jar-with-depencencies.jar```. In order to launch the Spark job use this command in a shell with a configured Spark environment:
+1. Put in `data/input.txt` URLs of web pages that you wanna analyze (URL per line)
+2. Go to project root directory and execute `run.sh`. This will pull the image from [Docker Hub repo](https://hub.docker.com/r/grpro/spark-popular-words-web/)
+   and start the container with mounted `data` directory as a volume.
 
-    spark-submit --class com.examples.MainExample \
-      --master yarn-cluster \
-      spark-scala-maven-project-0.0.1-SNAPSHOT-jar-with-depencencies.jar \
-      inputhdfspath \
-      outputhdfspath
+After the job finishes see results within `data/output` directory
 
-The parameters ```inputhdfspath``` and ```outputhdfspath``` don't have to present the form ```hdfs://path/to/your/file``` but directly ```/path/to/your/files/``` because submitting a job the default file system is HDFS. To retrieve the result locally:
+### Build
 
-    hadoop fs -getmerge outputhdfspath resultSavedLocally
+In order to compile application and create docker image locally execute:
+
+`mvn clean install -Pdocker`
+
+See `docker images` output to find new image
+
+Use `run.sh` to run it.
+
+
+
+
+
