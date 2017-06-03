@@ -1,5 +1,8 @@
 dist: trusty
+services:
+  - docker
 jdk:
-  - openjdk8
+  - oraclejdk8
 language: java
-script: mvn clean test
+sudo: required
+script: mvn clean install -Pdocker

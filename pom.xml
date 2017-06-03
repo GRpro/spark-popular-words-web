@@ -16,18 +16,89 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <encoding>UTF-8</encoding>
         <scala.tools.version>2.11.7</scala.tools.version>
-        <!-- Put the Scala version of the cluster -->
         <scala.version>2.11.7</scala.version>
         <spark.version>2.1.1</spark.version>
     </properties>
 
-    <!-- repository to add org.apache.spark -->
-    <!--<repositories>-->
-    <!--<repository>-->
-    <!--<id>cloudera-repo-releases</id>-->
-    <!--<url>https://repository.cloudera.com/artifactory/repo/</url>-->
-    <!--</repository>-->
-    <!--</repositories>-->
+    <profiles>
+        <profile>
+            <id>docker</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>io.fabric8</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.21.0</version>
+                        <configuration>
+                            <images>
+                                <image>
+                                    <name>${artifactId}</name>
+
+                                    <build>
+                                        <!--<dockerFileDir>${basedir}</dockerFileDir>-->
+                                        <from>java:8</from>
+                                        <maintainer>grigoriyroghkov@gmail.com</maintainer>
+
+                                        <assembly>
+                                            <mode>dir</mode>
+                                            <inline>
+                                                <files>
+                                                    <file>
+                                                        <source>
+                                                            ${project.build.directory}/${artifactId}-${project.version}-jar-with-dependencies.jar
+                                                        </source>
+                                                        <outputDirectory>./
+                                                        </outputDirectory> <!-- create /maven/application.jar -->
+                                                        <destName>application.jar</destName>
+                                                    </file>
+                                                </files>
+                                            </inline>
+                                        </assembly>
+
+                                        <entryPoint>
+                                            <shell>java -Xms512m -Xmx1024m -jar /maven/application.jar $INPUT_URI $OUTPUT_URI
+                                            </shell>
+                                        </entryPoint>
+                                    </build>
+                                </image>
+                            </images>
+                        </configuration>
+
+                        <!-- Connect start/stop to pre- and
+                             post-integration-test phase, respectively if you want to start
+                             your docker containers during integration tests -->
+                        <executions>
+                            <execution>
+                                <id>docker-build</id>
+                                <goals>
+                                    <goal>build</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <!--<executions>-->
+                        <!--<execution>-->
+                        <!--<id>start</id>-->
+                        <!--<phase>pre-integration-test</phase>-->
+                        <!--<goals>-->
+                        <!--&lt;!&ndash; "build" should be used to create the images with the-->
+                        <!--artifact &ndash;&gt;-->
+                        <!--<goal>build</goal>-->
+                        <!--<goal>start</goal>-->
+                        <!--</goals>-->
+                        <!--</execution>-->
+                        <!--<execution>-->
+                        <!--<id>stop</id>-->
+                        <!--<phase>post-integration-test</phase>-->
+                        <!--<goals>-->
+                        <!--<goal>stop</goal>-->
+                        <!--</goals>-->
+                        <!--</execution>-->
+                        <!--</executions>-->
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
@@ -107,77 +178,6 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>io.fabric8</groupId>
-                <artifactId>docker-maven-plugin</artifactId>
-                <version>0.21.0</version>
-                <configuration>
-                    <images>
-                        <image>
-                            <name>${artifactId}</name>
-
-                            <build>
-                                <!--<dockerFileDir>${basedir}</dockerFileDir>-->
-                                <from>java:8</from>
-                                <maintainer>grigoriyroghkov@gmail.com</maintainer>
-
-                                <assembly>
-                                    <mode>dir</mode>
-                                    <inline>
-                                        <files>
-                                            <file>
-                                                <source>
-                                                    ${project.build.directory}/${artifactId}-${project.version}-jar-with-dependencies.jar
-                                                </source>
-                                                <outputDirectory>./
-                                                </outputDirectory> <!-- create /maven/application.jar -->
-                                                <destName>application.jar</destName>
-                                            </file>
-                                        </files>
-                                    </inline>
-                                </assembly>
-
-                                <entryPoint>
-                                    <shell>java -Xms512m -Xmx1024m -jar /maven/application.jar $INPUT_URI $OUTPUT_URI
-                                    </shell>
-                                </entryPoint>
-                            </build>
-                        </image>
-                    </images>
-                </configuration>
-
-                <!-- Connect start/stop to pre- and
-                     post-integration-test phase, respectively if you want to start
-                     your docker containers during integration tests -->
-                <executions>
-                    <execution>
-                        <id>docker-build</id>
-                        <goals>
-                            <goal>build</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <!--<executions>-->
-                <!--<execution>-->
-                <!--<id>start</id>-->
-                <!--<phase>pre-integration-test</phase>-->
-                <!--<goals>-->
-                <!--&lt;!&ndash; "build" should be used to create the images with the-->
-                <!--artifact &ndash;&gt;-->
-                <!--<goal>build</goal>-->
-                <!--<goal>start</goal>-->
-                <!--</goals>-->
-                <!--</execution>-->
-                <!--<execution>-->
-                <!--<id>stop</id>-->
-                <!--<phase>post-integration-test</phase>-->
-                <!--<goals>-->
-                <!--<goal>stop</goal>-->
-                <!--</goals>-->
-                <!--</execution>-->
-                <!--</executions>-->
             </plugin>
         </plugins>
     </build>
